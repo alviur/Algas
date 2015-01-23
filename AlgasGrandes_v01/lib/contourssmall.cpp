@@ -5,6 +5,57 @@ ContoursSmall::ContoursSmall()
 {
 }
 
+/***************************************************************************************************
+Funciones
+Descripcion: rota imagen
+***************************************************************************************************/
+//correccion de la posicion
+
+cv::Mat rotacion(cv::Mat src,double angle){
+
+cv::Point2f src2(src.cols/2.0F, src.rows/2.0F);
+cv::Mat rot_mat;
+
+
+    rot_mat = getRotationMatrix2D(src2,angle, 1.0);
+
+cv::Mat dstrot;
+cv::warpAffine(src, dstrot, rot_mat, src.size(), cv::INTER_CUBIC,
+               cv::BORDER_CONSTANT,
+               cv::Scalar(0,0,0));//ROTACION
+
+return dstrot;
+
+}
+
+
+/***************************************************************************************************
+Funciones
+Descripcion: Entrega imagen rotada
+***************************************************************************************************/
+
+
+cv::Mat getRotatedImage(cv::Mat src,RotatedRect rect){
+
+        // matrices we'll use
+        cv::Mat M, rotated, cropped;
+        // get angle and size from the bounding box
+        float angle = rect.angle;
+        Size rect_size = rect.size;
+        // thanks to http://felix.abecassis.me/2011/10/opencv-rotation-deskewing/
+        if (rect.angle < -45.) {
+            angle += 90.0;
+            swap(rect_size.width, rect_size.height);
+        }
+        // get the rotation matrix
+        M = getRotationMatrix2D(rect.center, angle, 1.0);
+        // perform the affine transformation
+        warpAffine(src, rotated, M, src.size(), INTER_CUBIC);
+        // crop the resulting image
+        getRectSubPix(rotated, rect_size, rect.center, cropped);
+
+        return cropped;
+}
 
 
 /**************************************************************************************************
@@ -31,25 +82,87 @@ vector<vector<Point> > internalContours(cv::Mat  img_src)
     cv::Mat imgS,imgS2;
 
 
+
+    cv::Mat imgSB,imgS2B,img_src2;
+    img_src.copyTo(img_src2);
+    vector<vector<Point> > contoursB;
+
+
+
+        // pyrMeanShiftFiltering(img_src, img_src, 5, 40, 2);
         cvtColor(img_src,imgS2,COLOR_RGB2GRAY); // Pasar a grises
-        threshold(imgS2,imgS,80,255,cv::THRESH_OTSU);
+
+        cvtColor(img_src,imgS2B,COLOR_RGB2GRAY); // Pasar a grises
+        threshold(imgS2B,imgSB,80,255,cv::THRESH_OTSU);
+        imgSB=255-imgSB;
+        findContours( imgSB, contoursB, hierarchy,cv::RETR_TREE,cv::CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+
+
+
+        Simage::colorReduce(imgS2,64);
+
+
+        namedWindow("src Discreta",0);
+        imshow("src Discreta",imgS2);
+
+        threshold(imgS2,imgS2,80,255,cv::THRESH_OTSU);
+
+
+        namedWindow("discretizada binarizada",0);
+        imshow("discretizada binarizada",imgS2);
+
 
         imgS=255-imgS;
-
-        findContours( imgS, contours, hierarchy,cv::RETR_TREE,cv::CHAIN_APPROX_SIMPLE, Point(0, 0));
-
+        findContours( imgS2, contours, hierarchy,cv::RETR_TREE,cv::CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 
+        for(int m=0;m<contours.size();m++)
+            drawContours(img_src,contours,m,cv::Scalar(255,0,0));
+
+
+        for(int m=0;m<contoursB.size();m++)
+            drawContours(img_src2,contoursB,m,cv::Scalar(255,0,0));
+
+
+//double pointPolygonTest(InputArray contour, Point2f pt, bool measureDist)
+
+
+
+
+
+        namedWindow("Contornos discretizada",0);
+        imshow("Contornos discretizada",img_src);
+
+        namedWindow("Contornos",0);
+        imshow("Contornos",img_src2);
+
+        waitKey(0);
 
 
         return contours;
 }
 
 
+/**************************************************************************************************
+Funciones
+Descripcion:guarda la imagen
+***************************************************************************************************/
+void saveImage(cv::Mat src,String filename,int index)
+{
+
+QString path=filename.c_str();//Qstring para manejar nombres de rutas
+
+path.append(QString("%1").arg(index));
+path= path +".png";
 
 
+vector<int> compression_params;//vector con parametros de imagenes para guardar
+compression_params.push_back(cv::IMWRITE_PXM_BINARY);
+compression_params.push_back(9);
+imwrite(path.toUtf8().constData(), src, compression_params);
 
-
+}
 
 /**************************************************************************************************
 Funciones
@@ -89,6 +202,9 @@ vector<vector<Point> > externalContours(cv::Mat  img_src)
 
     img_subResult.copyTo(img_srcTreshCopy);//realiza una copia de img_thresh
 
+
+
+
     Scontour::GetContourHierachy(img_srcTreshCopy,contours,hierarchy,30,cv::RETR_LIST,cv::CHAIN_APPROX_NONE);//Get contours form image
     //img_contours=Scontour::drawCont(img_src,contours);//Dibuja los contornos en la imagen
 
@@ -102,9 +218,9 @@ vector<vector<Point> > externalContours(cv::Mat  img_src)
         }
     }
 
+
+
     cv::drawContours(img_contours,contours,Maxindice,Scalar(255,0,0),2,8);
-
-
 
 
 
@@ -159,11 +275,53 @@ vector<vector<Point> > externalContours(cv::Mat  img_src)
 
 
         for(int k=0; k< ReturnedContours.size() -1;k++)
-            cv::drawContours(img_contours,ReturnedContours,k,Scalar(255,0,0),2,8);
+        {
+
+            approxPolyDP(ReturnedContours[k],ReturnedContours[k],4,false);
+            RotatedRect recRot= minAreaRect(ReturnedContours[k]);
+                        
+            cv::Mat Contorno,contornoGray;
+
+
+
+           // cv::drawContours(img_contours,ReturnedContours,k,Scalar(255,0,0),2,8);
+
+           Contorno =getRotatedImage(img_contours,recRot);
+           cvtColor(Contorno,contornoGray,cv::COLOR_BGR2GRAY);
+
+
+
+           Simage::colorReduce(contornoGray,64);
+
+            if(Contorno.data){
+            namedWindow("imagenes individuales discretizadas",0);
+            imshow("imagenes individuales discretizadas",contornoGray);
 
 
 
 
+
+            //guarda aqui
+            saveImage(Contorno,"/home/lex/6_Sistemic/1_Proyecto_Microalgas/AlgasGrandes_v01-build-desktop-Qt_4_8_2_in_PATH__System__Release/algas_sin_Contorno/alga",k);
+
+
+
+            namedWindow("imagenes individuales",0);
+            imshow("imagenes individuales",Contorno);
+
+            //waitKey(0);
+            }
+
+
+
+         }
+
+
+
+        //namedWindow("Contornos grandes",0);
+        imshow("Contornos grandes",img_contours);
+
+        waitKey(0);
 
 
 
@@ -181,7 +339,7 @@ MAIN
 Descripcion:Extrae Contornos pequeños
 ***************************************************************************************************/
 
-vector<vector<vector<Point> > > ContoursSmall::contourSmallget( cv::Mat img_src, cv::Mat img_srcColor, vector<vector<Point> > &contoursBig){
+vector<vector<vector<Point> > > ContoursSmall::contourSmallget( cv::Mat img_src, cv::Mat img_srcColor, vector<vector<Point> > &contoursBig, vector<Point> &positions){
 
 
     cv::Mat mask2,mascara4;
@@ -248,6 +406,7 @@ img_checked= img_srcColor -img_cotoursMask;
 
 contoursBig=externalContours(img_checked);//get external contours
 
+
 ///Small contours extraction
 
  vector<vector<vector<Point> > > vector_algas(contoursBig.size());//, vector<vector<Point> >(1000,std::vector<Point>(1000)));/// Arreglar despues
@@ -257,7 +416,11 @@ contoursBig=externalContours(img_checked);//get external contours
 for(int i=0;i< contoursBig.size() -1; i++)
 {
 
+
+   cv::Point punto(img_group.x,img_group.y);
+
     img_group= boundingRect(contoursBig[i]);
+    positions.push_back((cv::Point)punto);
     vector_algas[i]= internalContours(img_srcColor(img_group));//Extrae Contornos pequeños y los ingresa en el vector principal
 }
 

@@ -10,7 +10,9 @@ Autor: Alexander Gómez - Germán Díez - Daniela Sánchez
 
 #include <opencv2/opencv.hpp>
 #include <qdebug.h>
+#include <QString>
 #include "scontour.h"
+#include "simage.h"
 
 
 using namespace cv;
@@ -21,7 +23,7 @@ private:
 
 public:
     ContoursSmall();
-    static vector<vector<vector<Point> > > contourSmallget(Mat img_src, Mat img_srcColor, vector<vector<Point> > &contoursBig);
+    static vector<vector<vector<Point> > > contourSmallget(Mat img_src, Mat img_srcColor, vector<vector<Point> > &contoursBig, vector<Point>  &positions);
 
 };
 

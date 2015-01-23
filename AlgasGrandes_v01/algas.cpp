@@ -62,10 +62,12 @@ void Algas::on_pushButton_2_released()//process button
 
 
     vector<vector<Point> > contoursBig;
+    vector<Point>  positions;
     vector<vector<Point> > contoursBig2;
-    vector1=ContoursSmall::contourSmallget(img_mask, img_src,contoursBig);
+    vector1=ContoursSmall::contourSmallget(img_mask, img_src,contoursBig,positions);
 
-
+    for(int a=0; a< positions.size();a++)
+        qDebug()<<positions[a].x<<positions[a].y;
 
 
     // vector<vector<Point> > ContoursSmall::contourSmallget(vector<vector<Point> > contornos, cv::Mat img_src)
@@ -223,7 +225,12 @@ void Algas::on_pushButton_2_released()//process button
     qDebug()<<"oe";
     ///Rules
     ///
-    ///
+
+
+
+
+
+
 
     waitKey(0);
 
