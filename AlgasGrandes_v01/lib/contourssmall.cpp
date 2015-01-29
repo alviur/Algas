@@ -301,8 +301,9 @@ vector<vector<Point> > externalContours(cv::Mat  img_src)
 
 
 
-            //guarda aqui
+            /// guarda aqui
             saveImage(Contorno,"/home/lex/6_Sistemic/1_Proyecto_Microalgas/AlgasGrandes_v01-build-desktop-Qt_4_8_2_in_PATH__System__Release/algas_sin_Contorno/alga",k);
+            qDebug()<<"Grabe!"<<k<<ReturnedContours.size();
 
 
 

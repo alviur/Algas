@@ -44,6 +44,7 @@ void Algas::on_pushButton_2_released()//process button
 
     ///Filter image
     Filter::filterfun(img_src,&img_line,&img_mask);//Extract background and clean image
+    qDebug()<<"1.Filtro listo";
 
 //    namedWindow("Img Line",0);
 //    imshow("Img Line",img_line);
@@ -65,6 +66,7 @@ void Algas::on_pushButton_2_released()//process button
     vector<Point>  positions;
     vector<vector<Point> > contoursBig2;
     vector1=ContoursSmall::contourSmallget(img_mask, img_src,contoursBig,positions);
+    qDebug()<<"3.contorno listo";
 
     for(int a=0; a< positions.size();a++)
         qDebug()<<positions[a].x<<positions[a].y;
